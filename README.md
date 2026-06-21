@@ -25,13 +25,13 @@ python main.py
 python -m PyInstaller --onefile --windowed --icon=app.ico --hidden-import=bleak.backends.winrt --hidden-import=PIL._tkinter_finder main.py
 ```
 ## Структура проекта
-MXW01-Printer/
+`MXW01-Printer/
 ├── main.py
 ├── lefuxin_driver.py
 ├── image_manager.py
 ├── renderer.py
 ├── requirements.txt
-└── README.md
+└── README.md`
 
 ## Лицензия
 MIT
