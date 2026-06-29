@@ -4,11 +4,14 @@ from PIL import Image, ImageTk
 import asyncio
 import threading
 import os
+import sys
 import re
 from lefuxin_driver import LefuxinDriver
 from renderer import Renderer
 from image_manager import ImageManager
 import bleak
+
+VERSION = "1.0.4"
 
 class InsertImageDialog(Toplevel):
     def __init__(self, parent, default_size=100):
@@ -64,9 +67,32 @@ class InsertImageDialog(Toplevel):
 class PrinterApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("MXW01 Bluetooth Printer")
+        self.root.title(f"MXW01 Bluetooth Printer v{VERSION}")
         self.root.geometry("900x700")
+        
+        # Устанавливаем иконку окна и панели задач
+        try:
+            if getattr(sys, 'frozen', False):
+                icon_path = os.path.join(sys._MEIPASS, 'app.ico')
+            else:
+                icon_path = 'app.ico'
+            
+            if os.path.exists(icon_path):
+                self.root.iconbitmap(icon_path)
+        except:
+            pass
+        
+        # Устанавливаем AppUserModelID для панели задач (Windows)
+        try:
+            import ctypes
+            app_id = f'MXW01.Printer.{VERSION}'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        except:
+            pass
+        
         self.driver = None
+        self.font_path = None
+        self.font_name = None
         self.renderer = Renderer(font_size=20)
         self.style = ttk.Style()
         self.preview_canvas = None
@@ -78,6 +104,8 @@ class PrinterApp:
         menubar.add_cascade(label="Настройки", menu=settings_menu)
         settings_menu.add_command(label="Светлая тема", command=lambda: self.set_theme("light"))
         settings_menu.add_command(label="Тёмная тема", command=lambda: self.set_theme("dark"))
+        settings_menu.add_separator()
+        settings_menu.add_command(label="О программе", command=self.show_about)
 
         toolbar = ttk.Frame(root)
         toolbar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -157,6 +185,13 @@ class PrinterApp:
 
         self.text_editor.bind("<KeyRelease>", lambda e: self.auto_preview())
         self.auto_preview_timer = None
+
+    def show_about(self):
+        messagebox.showinfo("О программе", 
+            f"MXW01 Bluetooth Printer v{VERSION}\n\n"
+            "Печать на термопринтере MXW01 через Bluetooth.\n"
+            "Поддержка Markdown, изображений и QR-кодов.\n\n"
+            "© 2026 | GitHub: https://github.com/fjk-dev/MXW01-Printer")
 
     def on_font_size_change(self, value):
         size = int(float(value))
@@ -277,8 +312,7 @@ class PrinterApp:
         w = int(self.preview_image.width * self.scale_factor)
         h = int(self.preview_image.height * self.scale_factor)
         resized = self.preview_image.resize((w, h), Image.Resampling.NEAREST)
-        inverted = resized.point(lambda x: 1 - x)
-        self.preview_tk = ImageTk.BitmapImage(inverted, foreground="black", background="white")
+        self.preview_tk = ImageTk.BitmapImage(resized, foreground="black", background="white")
         self.preview_canvas.delete("all")
         self.preview_canvas.create_image(w//2, h//2, image=self.preview_tk)
         self.preview_canvas.config(scrollregion=(0, 0, w, h))
