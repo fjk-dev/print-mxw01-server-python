@@ -11,7 +11,7 @@ from renderer import Renderer
 from image_manager import ImageManager
 import bleak
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 class InsertImageDialog(Toplevel):
     def __init__(self, parent, default_size=100):
@@ -70,19 +70,16 @@ class PrinterApp:
         self.root.title(f"MXW01 Bluetooth Printer v{VERSION}")
         self.root.geometry("900x700")
         
-        # Устанавливаем иконку окна и панели задач
         try:
             if getattr(sys, 'frozen', False):
                 icon_path = os.path.join(sys._MEIPASS, 'app.ico')
             else:
                 icon_path = 'app.ico'
-            
             if os.path.exists(icon_path):
                 self.root.iconbitmap(icon_path)
         except:
             pass
         
-        # Устанавливаем AppUserModelID для панели задач (Windows)
         try:
             import ctypes
             app_id = f'MXW01.Printer.{VERSION}'
@@ -306,13 +303,12 @@ class PrinterApp:
         except Exception as e:
             self.status_var.set(f"Ошибка рендеринга: {e}")
 
-       def _draw_preview(self):
+    def _draw_preview(self):
         if not self.preview_image:
             return
         w = int(self.preview_image.width * self.scale_factor)
         h = int(self.preview_image.height * self.scale_factor)
         resized = self.preview_image.resize((w, h), Image.Resampling.NEAREST)
-        # Инвертируем для предпросмотра (на светлом фоне должны быть чёрные буквы)
         inverted = resized.point(lambda x: 1 - x)
         self.preview_tk = ImageTk.BitmapImage(inverted, foreground="black", background="white")
         self.preview_canvas.delete("all")
